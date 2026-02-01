@@ -1,0 +1,5 @@
+librosa
+mido
+numpy
+PyQt6
+PyInstaller
