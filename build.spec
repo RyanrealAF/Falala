@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_data_files
 
-datas = []
+datas = [('logo.svg', '.')]
 datas += collect_data_files('librosa')
 datas += collect_data_files('numpy')
 

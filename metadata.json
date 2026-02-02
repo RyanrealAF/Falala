@@ -1,0 +1,5 @@
+{
+  "name": "Audio → MIDI Converter",
+  "description": "Convert audio to MIDI for OBS visual sync. Built with Python and PyQt6.",
+  "requestFramePermissions": []
+}

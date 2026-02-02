@@ -5,7 +5,8 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QFileDialog, QCheckBox, QSpinBox, QDoubleSpinBox,
                              QFrame)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QSize
-from PyQt6.QtGui import QFont, QDragEnterEvent, QDropEvent
+from PyQt6.QtGui import QFont, QDragEnterEvent, QDropEvent, QPixmap
+from PyQt6.QtSvgWidgets import QSvgWidget
 
 # Import conversion engine
 from audio_to_midi import generate_midi, auto_detect_bpm
@@ -108,6 +109,17 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(central_widget)
         layout.setSpacing(15)
         layout.setContentsMargins(30, 30, 30, 30)
+
+        # Logo
+        if os.path.exists("logo.svg"):
+            logo_container = QWidget()
+            logo_layout = QHBoxLayout(logo_container)
+            self.logo_widget = QSvgWidget("logo.svg")
+            self.logo_widget.setFixedSize(200, 200)
+            logo_layout.addStretch()
+            logo_layout.addWidget(self.logo_widget)
+            logo_layout.addStretch()
+            layout.addWidget(logo_container)
 
         # File Picker
         file_layout = QVBoxLayout()
