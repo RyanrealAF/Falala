@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom/client';
+import './style.css';
 
 // --- Main App Component ---
 const App: React.FC = () => {
