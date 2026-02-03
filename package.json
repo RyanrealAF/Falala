@@ -1,7 +1,10 @@
 {
   "name": "buildwhilebleeding-studio",
+  "productName": "BUILDWHILEBLEEDING Studio",
+  "description": "Professional drum separation studio with AI-powered assistant",
+  "author": "BUILDWHILEBLEEDING",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "main": "main.cjs",
   "scripts": {
     "dev": "vite",
@@ -40,7 +43,10 @@
       "main.cjs"
     ],
     "win": {
-      "target": "portable"
+      "target": [
+        "portable",
+        "zip"
+      ]
     }
   }
 }
