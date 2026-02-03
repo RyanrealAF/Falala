@@ -16,10 +16,15 @@ const App: React.FC = () => {
   const [audioLoaded, setAudioLoaded] = useState(false);
   
   // Mixer State
-  const [kickVolume, setKickVolume] = useState(75);
-  const [snareVolume, setSnareVolume] = useState(75);
-  const [hiHatVolume, setHiHatVolume] = useState(75);
-  const [overheadsVolume, setOverheadsVolume] = useState(75);
+  const [volumes, setVolumes] = useState<{ [key: string]: number }>({
+    vocal: 75,
+    bass: 75,
+    other: 75,
+    kick: 75,
+    snare: 75,
+    'high-hat': 75,
+    overheads: 75
+  });
   
   // Audio Context
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -52,35 +57,19 @@ const App: React.FC = () => {
       const source = audioContextRef.current.createMediaElementSource(audio);
       audioSourceRef.current = source;
       
-      // Create gain nodes for each drum channel
-      const kickGain = audioContextRef.current.createGain();
-      const snareGain = audioContextRef.current.createGain();
-      const hiHatGain = audioContextRef.current.createGain();
-      const overheadsGain = audioContextRef.current.createGain();
+      // Create gain nodes for each stem
+      const stems = ['vocal', 'bass', 'other', 'kick', 'snare', 'high-hat', 'overheads'];
+      const gainNodes: {[key: string]: GainNode} = {};
       
-      gainNodesRef.current = {
-        kick: kickGain,
-        snare: snareGain,
-        hiHat: hiHatGain,
-        overheads: overheadsGain
-      };
+      stems.forEach(stem => {
+        const gainNode = audioContextRef.current!.createGain();
+        gainNode.gain.value = volumes[stem] / 100;
+        source.connect(gainNode);
+        gainNode.connect(audioContextRef.current!.destination);
+        gainNodes[stem] = gainNode;
+      });
       
-      // Set initial volumes (convert 0-100 to 0-1)
-      kickGain.gain.value = kickVolume / 100;
-      snareGain.gain.value = snareVolume / 100;
-      hiHatGain.gain.value = hiHatVolume / 100;
-      overheadsGain.gain.value = overheadsVolume / 100;
-      
-      // Connect nodes (simple pass-through for now)
-      source.connect(kickGain);
-      source.connect(snareGain);
-      source.connect(hiHatGain);
-      source.connect(overheadsGain);
-      
-      kickGain.connect(audioContextRef.current.destination);
-      snareGain.connect(audioContextRef.current.destination);
-      hiHatGain.connect(audioContextRef.current.destination);
-      overheadsGain.connect(audioContextRef.current.destination);
+      gainNodesRef.current = gainNodes;
       
       setAudioLoaded(true);
       setPipelineStatus('Audio loaded. Ready to process.');
@@ -94,38 +83,25 @@ const App: React.FC = () => {
     if (!uploadedFile || !audioLoaded) return;
     
     setIsProcessing(true);
-    setPipelineStatus('Processing drum separation...');
+    setPipelineStatus('Processing full stem separation...');
     
     // Simulate processing
     setTimeout(() => {
       setIsProcessing(false);
-      setPipelineStatus('Drum separation complete!');
-    }, 2000);
+      setPipelineStatus('Stem separation complete!');
+    }, 3000);
   };
 
-  const handleVolumeChange = (drum: string, value: number) => {
+  const handleVolumeChange = (stem: string, value: string) => {
     const volume = parseInt(value);
-    const gainNode = gainNodesRef.current[drum.toLowerCase()];
+    const stemKey = stem.toLowerCase();
+    const gainNode = gainNodesRef.current[stemKey];
     
     if (gainNode) {
       gainNode.gain.value = volume / 100;
     }
     
-    // Update state
-    switch (drum) {
-      case 'Kick':
-        setKickVolume(volume);
-        break;
-      case 'Snare':
-        setSnareVolume(volume);
-        break;
-      case 'Hi-Hat':
-        setHiHatVolume(volume);
-        break;
-      case 'Overheads':
-        setOverheadsVolume(volume);
-        break;
-    }
+    setVolumes(prev => ({ ...prev, [stemKey]: volume }));
   };
 
   const startRecording = async () => {
@@ -139,7 +115,7 @@ const App: React.FC = () => {
     setMessages([
       { 
         type: 'ai', 
-        content: 'AI Voice Assistant is currently unavailable. Please use the drum separation and mixer features.' 
+        content: 'AI Voice Assistant is currently unavailable. Please use the stem separation and mixer features.'
       }
     ]);
   };
@@ -168,17 +144,20 @@ const App: React.FC = () => {
     };
   }, [stopAudioProcessing]);
 
+  const drumStems = ['Kick', 'Snare', 'High-hat', 'Overheads'];
+  const otherStems = ['Vocal', 'Bass', 'Other'];
+
   return (
     <div className="flex flex-col md:flex-row flex-grow w-full max-w-screen-2xl mx-auto p-4 md:space-x-4">
       {/* Left Panel: Drum Separation, Mixer, Waveform */}
-      <div className="flex flex-col w-full md:w-1/2 space-y-4 mb-4 md:mb-0">
-        {/* Drum Separation Module */}
+      <div className="flex flex-col w-full md:w-2/3 space-y-4 mb-4 md:mb-0">
+        {/* Separation Module */}
         <section className="bg-secondary p-6 rounded-lg shadow-xl flex-grow">
-          <h2 className="text-2xl font-bold text-accent mb-4">Drum Separation</h2>
+          <h2 className="text-2xl font-bold text-accent mb-4">Stem Separation</h2>
           <div className="flex flex-col items-center justify-center border-2 border-dashed border-textdark p-8 rounded-md h-48">
             {!uploadedFile ? (
               <>
-                <p className="text-lg text-textdark mb-4">Upload a drum track for separation</p>
+                <p className="text-lg text-textdark mb-4">Upload a track for full stem separation</p>
                 <input
                   type="file"
                   accept="audio/*"
@@ -214,7 +193,7 @@ const App: React.FC = () => {
                 ? 'bg-gray-500 cursor-not-allowed'
                 : 'bg-buttonbg hover:bg-buttonhover text-textlight'
             }`}
-            aria-label="Process Drum Separation"
+            aria-label="Process Separation"
           >
             {isProcessing ? 'Processing...' : 'Process Separation'}
           </button>
@@ -223,33 +202,53 @@ const App: React.FC = () => {
         {/* Mixer Module */}
         <section className="bg-secondary p-6 rounded-lg shadow-xl">
           <h2 className="text-2xl font-bold text-accent mb-4">Mixer</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {['Kick', 'Snare', 'Hi-Hat', 'Overheads'].map(drum => (
-              <div key={drum} className="flex flex-col items-center">
-                <label htmlFor={`slider-${drum.toLowerCase()}`} className="text-textlight mb-2">
-                  {drum}
-                </label>
-                <input
-                  type="range"
-                  id={`slider-${drum.toLowerCase()}`}
-                  min="0"
-                  max="100"
-                  value={
-                    drum === 'Kick' ? kickVolume :
-                    drum === 'Snare' ? snareVolume :
-                    drum === 'Hi-Hat' ? hiHatVolume : overheadsVolume
-                  }
-                  onChange={(e) => handleVolumeChange(drum, e.target.value)}
-                  className="w-full h-2 bg-textdark rounded-lg appearance-none cursor-pointer accent-accent"
-                  aria-label={`${drum} volume slider`}
-                />
-                <span className="text-sm text-textdark mt-1">{
-                  drum === 'Kick' ? kickVolume :
-                  drum === 'Snare' ? snareVolume :
-                  drum === 'Hi-Hat' ? hiHatVolume : overheadsVolume
-                }%</span>
-              </div>
-            ))}
+
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-textlight mb-3 border-b border-textdark pb-1">Drums (Focus)</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {drumStems.map(stem => (
+                <div key={stem} className="flex flex-col items-center">
+                  <label htmlFor={`slider-${stem.toLowerCase()}`} className="text-textlight mb-2">
+                    {stem}
+                  </label>
+                  <input
+                    type="range"
+                    id={`slider-${stem.toLowerCase()}`}
+                    min="0"
+                    max="100"
+                    value={volumes[stem.toLowerCase()]}
+                    onChange={(e) => handleVolumeChange(stem, e.target.value)}
+                    className="w-full h-2 bg-textdark rounded-lg appearance-none cursor-pointer accent-accent"
+                    aria-label={`${stem} volume slider`}
+                  />
+                  <span className="text-sm text-textdark mt-1">{volumes[stem.toLowerCase()]}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-textlight mb-3 border-b border-textdark pb-1">Other Instruments</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {otherStems.map(stem => (
+                <div key={stem} className="flex flex-col items-center">
+                  <label htmlFor={`slider-${stem.toLowerCase()}`} className="text-textlight mb-2">
+                    {stem}
+                  </label>
+                  <input
+                    type="range"
+                    id={`slider-${stem.toLowerCase()}`}
+                    min="0"
+                    max="100"
+                    value={volumes[stem.toLowerCase()]}
+                    onChange={(e) => handleVolumeChange(stem, e.target.value)}
+                    className="w-full h-2 bg-textdark rounded-lg appearance-none cursor-pointer accent-buttonbg"
+                    aria-label={`${stem} volume slider`}
+                  />
+                  <span className="text-sm text-textdark mt-1">{volumes[stem.toLowerCase()]}%</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -272,8 +271,8 @@ const App: React.FC = () => {
       </div>
 
       {/* Right Panel: AI Voice Conversation, Pipeline Status */}
-      <div className="flex flex-col w-full md:w-1/2 space-y-4">
-        {/* AI Voice Conversation Module */}
+      <div className="flex flex-col w-full md:w-1/3 space-y-4">
+        {/* AI Voice Assistant Module */}
         <section className="bg-secondary p-6 rounded-lg shadow-xl flex-grow">
           <h2 className="text-2xl font-bold text-accent mb-4">AI Voice Assistant</h2>
           <div className="flex flex-col h-full max-h-80 overflow-y-auto mb-4 bg-primary p-4 rounded-md border border-textdark">
