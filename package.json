@@ -15,6 +15,7 @@
     "electron:build:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
@@ -34,15 +35,13 @@
       "category": "public.app-category.music"
     },
     "win": {
-      "target": "nsis",
-      "icon": "icon.png"
+      "target": "nsis"
     },
     "linux": {
-      "target": "AppImage",
-      "icon": "icon.png"
+      "target": "AppImage"
     },
     "directories": {
-      "output": "dist/electron"
+      "output": "release"
     }
   }
 }
