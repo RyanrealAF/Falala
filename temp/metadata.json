@@ -1,0 +1,7 @@
+{
+  "description": "A boutique hardware-inspired recording studio interface for neural drum separation.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "name": "BUILDWHILEBLEEDING Studio"
+}

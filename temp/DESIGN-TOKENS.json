@@ -1,0 +1,31 @@
+
+{
+  "$schema": "https://unpkg.com/@theguild/design-tokens@latest/schema.json",
+  "name": "BUILDWHILEBLEEDING Studio - Aether Series",
+  "version": "2.0.0",
+  "description": "High-fidelity digital hardware aesthetic tokens",
+  "tokens": {
+    "effects": {
+      "laser-border": {
+        "value": "0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 15px rgba(0, 243, 255, 0.05)",
+        "description": "Sharp digital border with subtle cyan haze"
+      },
+      "obsidian-glass": {
+        "value": "linear-gradient(135deg, rgba(20,20,20,0.8) 0%, rgba(5,5,5,0.9) 100%)",
+        "description": "Glassmorphic obsidian panel"
+      },
+      "solar-glow": {
+        "value": "0 0 20px rgba(255, 77, 0, 0.3)",
+        "description": "Aggressive high-tech orange glow"
+      }
+    },
+    "colors": {
+      "obsidian": { "value": "#050505" },
+      "carbon": { "value": "#121212" },
+      "nova-orange": { "value": "#FF4D00" },
+      "cyber-cyan": { "value": "#00F3FF" },
+      "digital-white": { "value": "#F0F0F0" },
+      "oled-bg": { "value": "#020202" }
+    }
+  }
+}
