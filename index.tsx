@@ -287,18 +287,13 @@ const App: React.FC = () => {
   const otherStems = ['Vocal', 'Bass', 'Other'];
 
   return (
-    <div className="flex flex-col md:flex-row flex-grow w-full max-w-screen-2xl mx-auto p-6 md:space-x-6 bg-primary font-mono">
+    <div className="flex flex-col md:flex-row flex-grow w-full max-w-screen-2xl mx-auto p-6 md:space-x-6 bg-primary font-sans">
       {/* Left Panel: Studio Console Stacks */}
       <div className="flex flex-col w-full md:w-3/4 space-y-6">
 
         {/* Tape Deck Section */}
-        <section className="texture-wood-panel p-4 rounded-sm relative overflow-hidden">
-          <Screw className="top-2 left-2" />
-          <Screw className="top-2 right-2" />
-          <Screw className="bottom-2 left-2" />
-          <Screw className="bottom-2 right-2" />
-
-          <div className="texture-brushed-metal p-6 rounded-sm studio-border">
+        <section className="modern-panel p-6 relative overflow-hidden">
+          <div className="modern-border p-6">
             <h2 className="text-xl font-bold text-accent mb-4 tracking-tighter">ANALOG TAPE INTERFACE</h2>
 
             <div className="flex flex-col items-center justify-center border-2 border-black bg-black/40 p-8 rounded-sm h-40 relative group">
@@ -369,38 +364,27 @@ const App: React.FC = () => {
         </section>
 
         {/* Mixer Console Section */}
-        <section className="texture-wood-panel p-4 rounded-sm relative">
-          <Screw className="top-2 left-2" />
-          <Screw className="top-2 right-2" />
-          <Screw className="bottom-2 left-2" />
-          <Screw className="bottom-2 right-2" />
-
-          <div className="texture-brushed-metal p-6 rounded-sm studio-border">
+        <section className="modern-panel p-6 relative">
+          <div className="modern-border p-6">
             <h2 className="text-xl font-bold text-accent mb-6 tracking-tighter uppercase">Mixing Console v4.0</h2>
 
             <div className="space-y-8">
               {/* Drum Group */}
               <div>
                 <h3 className="text-sm font-black text-textdark mb-4 bg-black/50 px-2 py-1 inline-block border-l-4 border-accent">DRUM BUS</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div className="space-y-4">
                   {drumStems.map(stem => (
-                    <div key={stem} className="flex flex-col items-center bg-black/20 p-4 rounded-sm studio-border">
-                      <label className="text-[10px] font-black text-textlight mb-3 uppercase tracking-widest">{stem}</label>
-                      <div className="flex h-40 items-center justify-center">
-                        <VUMeter level={masterLevel * (volumes[stem.toLowerCase()] / 100)} />
-                        <div className="h-full flex flex-col justify-between py-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={volumes[stem.toLowerCase()]}
-                            onChange={(e) => handleVolumeChange(stem, e.target.value)}
-                            className="studio-fader h-32"
-                            style={{ appearance: 'slider-vertical' } as any}
-                          />
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-accent mt-3 bg-black px-2">{volumes[stem.toLowerCase()]}%</span>
+                    <div key={stem} className="flex items-center space-x-4 bg-black/20 p-4 rounded-sm studio-border">
+                      <label className="text-sm font-bold text-textlight w-20 uppercase tracking-widest">{stem}</label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={volumes[stem.toLowerCase()]}
+                        onChange={(e) => handleVolumeChange(stem, e.target.value)}
+                        className="flex-grow h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-thumb"
+                      />
+                      <span className="text-sm text-accent w-12 text-right">{volumes[stem.toLowerCase()]}%</span>
                     </div>
                   ))}
                 </div>
@@ -409,25 +393,19 @@ const App: React.FC = () => {
               {/* Instruments Group */}
               <div>
                 <h3 className="text-sm font-black text-textdark mb-4 bg-black/50 px-2 py-1 inline-block border-l-4 border-buttonbg">AUX BUS</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="space-y-4">
                   {otherStems.map(stem => (
-                    <div key={stem} className="flex flex-col items-center bg-black/20 p-4 rounded-sm studio-border">
-                      <label className="text-[10px] font-black text-textlight mb-3 uppercase tracking-widest">{stem}</label>
-                      <div className="flex h-40 items-center justify-center">
-                        <VUMeter level={masterLevel * (volumes[stem.toLowerCase()] / 100)} />
-                        <div className="h-full flex flex-col justify-between py-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={volumes[stem.toLowerCase()]}
-                            onChange={(e) => handleVolumeChange(stem, e.target.value)}
-                            className="studio-fader h-32"
-                            style={{ appearance: 'slider-vertical' } as any}
-                          />
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-buttonbg mt-3 bg-black px-2">{volumes[stem.toLowerCase()]}%</span>
+                    <div key={stem} className="flex items-center space-x-4 bg-black/20 p-4 rounded-sm studio-border">
+                      <label className="text-sm font-bold text-textlight w-20 uppercase tracking-widest">{stem}</label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={volumes[stem.toLowerCase()]}
+                        onChange={(e) => handleVolumeChange(stem, e.target.value)}
+                        className="flex-grow h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-thumb"
+                      />
+                      <span className="text-sm text-buttonbg w-12 text-right">{volumes[stem.toLowerCase()]}%</span>
                     </div>
                   ))}
                 </div>
@@ -437,13 +415,8 @@ const App: React.FC = () => {
         </section>
 
         {/* Oscilloscope / Waveform */}
-        <section className="texture-wood-panel p-4 rounded-sm relative">
-          <Screw className="top-2 left-2" />
-          <Screw className="top-2 right-2" />
-          <Screw className="bottom-2 left-2" />
-          <Screw className="bottom-2 right-2" />
-
-          <div className="texture-brushed-metal p-6 rounded-sm studio-border">
+        <section className="modern-panel p-6 relative">
+          <div className="modern-border p-6">
             <h2 className="text-xl font-bold text-accent mb-4 tracking-tighter uppercase">Oscilloscope Output</h2>
             <div className="w-full h-48 bg-[#0a0a0a] rounded-sm border-2 border-black flex items-center justify-center relative overflow-hidden">
               <div className="absolute inset-0 opacity-10"
@@ -467,13 +440,8 @@ const App: React.FC = () => {
       <div className="flex flex-col w-full md:w-1/4 space-y-6">
 
         {/* Rack AI Unit */}
-        <section className="texture-wood-panel p-4 rounded-sm relative flex-grow">
-          <Screw className="top-2 left-2" />
-          <Screw className="top-2 right-2" />
-          <Screw className="bottom-2 left-2" />
-          <Screw className="bottom-2 right-2" />
-
-          <div className="texture-brushed-metal p-6 h-full flex flex-col rounded-sm studio-border">
+        <section className="modern-panel p-6 relative flex-grow">
+          <div className="modern-border p-6 h-full flex flex-col">
             <h2 className="text-lg font-bold text-accent mb-4 tracking-tighter uppercase">AI PROCESSOR v9000</h2>
             <div className="flex flex-col flex-grow bg-black/60 p-4 rounded-sm border border-white/5 mb-4 font-mono text-[10px] overflow-y-auto studio-border shadow-inner">
               {messages.length === 0 && (
@@ -517,13 +485,8 @@ const App: React.FC = () => {
         </section>
 
         {/* System Status Rack */}
-        <section className="texture-wood-panel p-4 rounded-sm relative">
-          <Screw className="top-2 left-2" />
-          <Screw className="top-2 right-2" />
-          <Screw className="bottom-2 left-2" />
-          <Screw className="bottom-2 right-2" />
-
-          <div className="texture-brushed-metal p-6 rounded-sm studio-border">
+        <section className="modern-panel p-6 relative">
+          <div className="modern-border p-6">
             <h2 className="text-lg font-bold text-accent mb-4 tracking-tighter uppercase">System Status</h2>
             <div className="flex items-center space-x-3 bg-black/40 p-3 rounded-sm studio-border">
               <div className={`w-3 h-3 rounded-full ${audioLoaded ? 'bg-success shadow-[0_0_8px_#22c55e]' : 'bg-error shadow-[0_0_8px_#ef4444]'}`}></div>

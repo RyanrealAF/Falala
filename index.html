@@ -1,16 +1,1095 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BUILDWHILEBLEEDING Studio</title>
-    <!-- Google Fonts for Inter and Roboto Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>Bleed Console – WAV → Drum → MIDI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #0a0a0c;              /* Deep Void */
+      --panel: #161618;           /* Obsidian Inset */
+      --panel-soft: #1f1f23;
+      --accent-red: #e60000;      /* Blood Red */
+      --accent-red-soft: #b30000;
+      --accent-orange: #f39c12;   /* Circuit Orange */
+      --text-main: #ffffff;
+      --text-muted: #64748b;
+      --border-subtle: #26262c;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.75);
+      --shadow-inner: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(230, 0, 0, 0.12), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(243, 156, 18, 0.12), transparent 55%),
+        #0a0a0c;
+      color: var(--text-main);
+      font-family: var(--font-main);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1200px;
+      background: radial-gradient(circle at top, #111114 0, #050507 65%);
+      border-radius: 24px;
+      border: 1px solid #1b1b20;
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* fingerprint watermark */
+    .app-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.02) 0, transparent 55%),
+        radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.015) 0, transparent 55%);
+      mix-blend-mode: soft-light;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .app-header {
+      position: relative;
+      z-index: 1;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(90deg, rgba(230, 0, 0, 0.18), transparent);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: radial-gradient(circle at top, #2a2a2a 0, #0f0f12 70%);
+      border: 1px solid #4d4d4d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 18px rgba(230, 0, 0, 0.6);
+      overflow: hidden;
+    }
+
+    .brand-text-main {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+    }
+
+    .brand-text-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #0f0f12;
+      border: 1px solid rgba(243, 156, 18, 0.6);
+      box-shadow: 0 0 12px rgba(243, 156, 18, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 10px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent-orange);
+      box-shadow: 0 0 10px rgba(243, 156, 18, 0.9);
+    }
+
+    .app-main {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1.4fr) 260px;
+      gap: 16px;
+      padding: 16px;
+    }
+
+    @media (max-width: 1024px) {
+      .app-main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-inner);
+      padding: 12px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .panel-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+    }
+
+    .panel-badge {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(230, 0, 0, 0.7);
+      color: var(--accent-red);
+      background: rgba(230, 0, 0, 0.08);
+    }
+
+    .panel-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .file-drop {
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: linear-gradient(135deg, #161618, #1f1f23);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .file-drop::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(230, 0, 0, 0.18), transparent 40%, rgba(243, 156, 18, 0.18));
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .file-drop-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+    }
+
+    .file-drop-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .file-drop-text {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .file-drop-title {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .file-drop-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .file-drop-button {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--accent-orange);
+      background: var(--accent-orange);
+      color: #000;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.15s ease, filter 0.15s ease;
+      box-shadow: 0 0 14px rgba(243, 156, 18, 0.6);
+    }
+
+    .file-drop-button:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .meta-label {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .meta-value {
+      font-family: var(--font-mono);
+      color: var(--accent-orange);
+    }
+
+    .control-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: #0f0f12;
+      color: var(--text-main);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      padding: 7px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      background: var(--accent-red);
+      transition: width 0.15s ease;
+    }
+
+    .btn span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-primary {
+      border-color: var(--accent-orange);
+      background: var(--accent-orange);
+      color: #000;
+      box-shadow: 0 0 16px rgba(243, 156, 18, 0.7);
+    }
+
+    .btn-primary::before {
+      background: var(--accent-red);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:hover::before {
+      width: 2px; /* vertical red bleed border */
+    }
+
+    .btn-ghost {
+      background: #0f0f12;
+    }
+
+    .select {
+      flex: 1;
+      min-width: 0;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: #0f0f12;
+      color: var(--text-main);
+      font-size: 11px;
+      padding: 7px 10px;
+      outline: none;
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+        linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+      background-position: calc(100% - 12px) 9px, calc(100% - 7px) 9px;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+    }
+
+    .select:focus {
+      border-color: var(--accent-orange);
+    }
+
+    .mini-strip {
+      border-radius: var(--radius-md);
+      background: #0f0f12;
+      border: 1px solid var(--border-subtle);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .mini-strip-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mini-strip-label {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 10px;
+    }
+
+    .mini-strip-value {
+      font-family: var(--font-mono);
+      color: var(--accent-orange);
+      font-size: 11px;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 999px;
+      background: #26262c;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--accent-orange);
+      border: 1px solid #000;
+      box-shadow: 0 0 10px rgba(243, 156, 18, 0.8);
+      cursor: pointer;
+      margin-top: -4px;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--accent-orange);
+      border: 1px solid #000;
+      box-shadow: 0 0 10px rgba(243, 156, 18, 0.8);
+      cursor: pointer;
+    }
+
+    /* center studio surface */
+
+    .studio-surface {
+      background: var(--panel);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-inner);
+      padding: 12px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .studio-surface::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at top, rgba(230, 0, 0, 0.18), transparent 55%),
+        radial-gradient(circle at bottom, rgba(243, 156, 18, 0.12), transparent 55%);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .studio-top-row {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .studio-label-block {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .studio-label-main {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+    }
+
+    .studio-label-sub {
+      font-size: 12px;
+      color: var(--accent-orange);
+    }
+
+    .studio-leds {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+    }
+
+    .studio-led {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #26262c;
+      box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    }
+
+    .studio-led.active {
+      background: var(--accent-orange);
+      box-shadow: 0 0 10px rgba(243, 156, 18, 0.9);
+    }
+
+    .studio-led.warn {
+      background: var(--accent-red-soft);
+      box-shadow: 0 0 10px rgba(230, 0, 0, 0.9);
+      opacity: 0.4;
+    }
+
+    .studio-meter-strip {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .meter-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .meter-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+    }
+
+    .meter-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #26262c;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .meter-fill {
+      position: absolute;
+      inset: 0;
+      width: 40%;
+      background: linear-gradient(90deg, #b30000, #e60000);
+      box-shadow: 0 0 16px rgba(230, 0, 0, 0.7);
+      transform-origin: left center;
+      transform: scaleX(0.3);
+      transition: transform 0.2s ease-out;
+    }
+
+    .studio-main-grid {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .studio-main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .waveform-shell {
+      border-radius: var(--radius-md);
+      background: #0f0f12;
+      border: 1px solid var(--border-subtle);
+      padding: 10px 10px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .waveform-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+    }
+
+    .waveform-main {
+      position: relative;
+      height: 120px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #050507, #161618);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .waveform-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 18px 100%, 100% 16px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .waveform-bars {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6px;
+      opacity: 0.9;
+    }
+
+    .waveform-bar {
+      width: 3px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #f39c12, #e60000);
+      opacity: 0.7;
+    }
+
+    .waveform-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .transport-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .transport-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: #0f0f12;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--text-main);
+      transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .transport-btn::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      background: var(--accent-red);
+      transition: width 0.15s ease;
+    }
+
+    .transport-btn span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .transport-btn.primary {
+      border-color: var(--accent-orange);
+      background: var(--accent-orange);
+      color: #000;
+      box-shadow: 0 0 14px rgba(243, 156, 18, 0.7);
+    }
+
+    .transport-btn.primary::before {
+      background: var(--accent-red);
+    }
+
+    .transport-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .transport-btn:hover::before {
+      width: 2px;
+    }
+
+    .timecode {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #050507;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .studio-right {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .pads-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .pad {
+      border-radius: 10px;
+      background: #0f0f12;
+      border: 1px solid var(--border-subtle);
+      padding: 8px 8px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.08s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    }
+
+    .pad::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      background: var(--accent-red);
+      transition: width 0.12s ease;
+    }
+
+    .pad-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+    }
+
+    .pad-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pad-name {
+      font-size: 12px;
+    }
+
+    .pad-meter {
+      width: 34px;
+      height: 6px;
+      border-radius: 999px;
+      background: #26262c;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .pad-meter-fill {
+      position: absolute;
+      inset: 0;
+      width: 60%;
+      background: linear-gradient(90deg, #b30000, #e60000);
+      transform-origin: left center;
+      transform: scaleX(0.2);
+      transition: transform 0.12s ease-out;
+    }
+
+    .pad-footer {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .pad.active {
+      transform: translateY(-1px);
+      border-color: var(--accent-orange);
+      box-shadow: 0 0 16px rgba(243, 156, 18, 0.5);
+    }
+
+    .pad.active::before {
+      width: 2px;
+    }
+
+    .pad.active .pad-meter-fill {
+      transform: scaleX(1);
+    }
+
+    /* right panel */
+
+    .right-panel-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .stem-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 8px;
+      border-radius: 10px;
+      background: #0f0f12;
+      border: 1px solid var(--border-subtle);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stem-row::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      background: var(--accent-red);
+      transition: width 0.15s ease;
+    }
+
+    .stem-row:hover::before {
+      width: 2px; /* bleed border on hover */
+    }
+
+    .stem-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stem-name {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+    }
+
+    .stem-sub {
+      font-size: 11px;
+      color: var(--accent-orange);
+      font-family: var(--font-mono);
+    }
+
+    .stem-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tag {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+    }
+
+    .tag-hot {
+      border-color: var(--accent-orange);
+      color: var(--accent-orange);
+    }
+
+    .footer-bar {
+      position: relative;
+      z-index: 1;
+      padding: 8px 16px 10px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: #0a0a0c;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .footer-led {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent-red);
+      box-shadow: 0 0 10px rgba(230, 0, 0, 0.9);
+    }
+
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .shortcut-pill {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: #0f0f12;
+      font-family: var(--font-mono);
+    }
+  </style>
 </head>
-<body class="bg-primary text-textlight font-sans antialiased min-h-screen flex flex-col">
-    <div id="root" class="flex-grow flex flex-col"></div>
-    <script type="module" src="index.tsx"></script>
-</body>
-</html>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-logo">
+          <!-- Bleed shield SVG -->
+          <svg width="32" height="32" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+            <path d="M300 60 L500 150 L500 440 C500 550 300 660 300 660 C300 660 100 550 100 440 L100 150 Z" fill="#2a2a2a" stroke="#4d4d4d" stroke-width="8" />
+            <g stroke="#f39c12" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.6">
+              <path d="M150 200 L180 200 L180 300 L210 300" /><circle cx="215" cy="300" r="3" fill="#f39c12" />
+              <path d="M450 200 L420 200 L420 320 L380 320" /><circle cx="375" cy="320" r="3" fill="#f39c12" />
+            </g>
+            <path d="M110 540 L250 450 L320 480 L350 420 L400 400 L480 280 L500 320 L420 420 L370 450 L340 520 L280 500 L110 540 Z" fill="#b30000" />
+            <circle cx="266" cy="620" r="9" fill="#e60000" />
+            <circle cx="186" cy="600" r="8" fill="#e60000" />
+          </svg>
+        </div>
+        <div>
+          <div class="brand-text-main">Bleed Console</div>
+          <div class="brand-text-sub">WAV → Drum Stems → MIDI</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span>Engine idle</span>
+        </div>
+        <span>Session: <span id="sessionName" style="font-family: var(--font-mono);">untitled.wav</span></span>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <!-- LEFT: INPUT -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Source</div>
+          <div class="panel-badge">Input</div>
+        </div>
+        <div class="panel-body">
+          <label class="file-drop" id="fileDrop">
+            <input type="file" id="fileInput" class="file-input" accept=".wav,audio/wav" />
+            <div class="file-drop-label">Drop wav here or browse</div>
+            <div class="file-drop-main">
+              <div class="file-drop-text">
+                <div class="file-drop-title" id="fileTitle">No file loaded</div>
+                <div class="file-drop-sub" id="fileSub">44.1kHz / 24‑bit · Stereo recommended</div>
+              </div>
+              <button type="button" class="file-drop-button">Browse</button>
+            </div>
+          </label>
+
+          <div class="meta-row">
+            <span class="meta-label">Length</span>
+            <span class="meta-value" id="metaLength">00:00</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Peak</span>
+            <span class="meta-value" id="metaPeak">‑∞ dB</span>
+          </div>
+
+          <div class="control-row">
+            <select id="modelSelect" class="select">
+              <option value="tight">Model: Tight Studio Kit</option>
+              <option value="room">Model: Roomy Live Kit</option>
+              <option value="electro">Model: Electro Hybrid</option>
+            </select>
+          </div>
+
+          <div class="control-row">
+            <button id="btnSeparate" class="btn btn-primary">
+              <span>Separate Drums</span>
+            </button>
+            <button id="btnToMidi" class="btn btn-ghost">
+              <span>Render MIDI</span>
+            </button>
+          </div>
+
+          <div class="mini-strip">
+            <div class="mini-strip-row">
+              <span class="mini-strip-label">Sensitivity</span>
+              <span class="mini-strip-value" id="sensitivityValue">Medium</span>
+            </div>
+            <input id="sensitivitySlider" type="range" min="0" max="2" step="1" value="1" />
+            <div class="mini-strip-row">
+              <span class="mini-strip-label">Quantize</span>
+              <span class="mini-strip-value" id="quantizeValue">1/16</span>
+            </div>
+            <input id="quantizeSlider" type="range" min="0" max="2" step="1" value="1" />
+          </div>
+        </div>
+      </section>
+
+      <!-- CENTER: STUDIO SURFACE -->
+      <section class="studio-surface">
+        <div class="studio-top-row">
+          <div class="studio-label-block">
+            <div class="studio-label-main">Session bus</div>
+            <div class="studio-label-sub" id="sessionStatus">Waiting for separation…</div>
+          </div>
+          <div class="studio-leds">
+            <span>Engine</span>
+            <div class="studio-led active" id="ledIdle"></div>
+            <div class="studio-led" id="ledProcessing"></div>
+            <div class="studio-led warn" id="ledClip"></div>
+          </div>
+        </div>
+
+        <div class="studio-meter-strip">
+          <div class="meter-block">
+            <div class="meter-label-row">
+              <span>Input</span>
+              <span id="meterInLabel">‑∞ dB</span>
+            </div>
+            <div class="meter-bar">
+              <div class="meter-fill" id="meterInFill"></div>
+            </div>
+          </div>
+          <div class="meter-block">
+            <div class="meter-label-row">
+              <span>Drum bus</span>
+              <span id="meterBusLabel">‑∞ dB</span>
+            </div>
+            <div class="meter-bar">
+              <div class="meter-fill" id="meterBusFill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="studio-main-grid">
+          <div class="waveform-shell">
+            <div class="waveform-header">
+              <span>Waveform</span>
+              <span id="waveformLabel">No audio loaded</span>
+            </div>
+            <div class="waveform-main">
+              <div class="waveform-grid"></div>
+              <div class="waveform-bars" id="waveformBars"></div>
+            </div>
+            <div class="waveform-footer">
+              <div class="transport-row">
+                <button class="transport-btn primary" id="btnPlay"><span>▶</span></button>
+                <button class="transport-btn" id="btnStop"><span>■</span></button>
+              </div>
+              <div class="timecode" id="timecode">00:00.000</div>
+            </div>
+          </div>
+
+          <div class="studio-right">
+            <div class="pads-grid" id="padsGrid">
+              <!-- pads injected -->
+            </div>
+
+            <div class="mini-strip">
+              <div class="mini-strip-row">
+                <span class="mini-strip-label">MIDI export</span>
+                <span class="mini-strip-value" id="midiStatus">Not rendered</span>
+              </div>
+              <div class="mini-strip-row">
+                <span class="mini-strip-label">Format</span>
